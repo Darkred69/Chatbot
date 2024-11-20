@@ -183,6 +183,19 @@ query_engine = SubQuestionQueryEngine.from_defaults(
     llm=OpenAI(),  # Remove the model parameter
 )
 
+
+query_engine_tool = QueryEngineTool(
+    query_engine=query_engine,
+    metadata=ToolMetadata(
+        name="sub_question_query_engine",
+        description="Useful for when you want to answer queries that require analyzing multiple Finance documents",
+    ),
+)
+
+tools = individual_query_engine_tools + [query_engine_tool]
+agent = OpenAIAgent.from_tools(tools, verbose=True)
+
+
 async def set_sources(response, msg):
     elements = []
     label_list = []
@@ -248,7 +261,8 @@ async def main(message: cl.Message):
     user_message = message.content
     
     # Process the user's query asynchronously
-    res = query_engine.query(message.content)
+    res = agent.chat(message.content)
+    # res = query_engine.query(message.content)
     
     # Check if 'res' has a 'response' attribute for the full response
     if hasattr(res, 'response'):
